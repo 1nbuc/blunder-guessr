@@ -1,0 +1,56 @@
+name: Build and Release
+
+on:
+    push:
+        branches:
+            - "main"
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "18"
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Determine version
+              id: version
+              run: |
+                  # Auto-increment patch version
+                  CURRENT_VERSION=$(node -p "require('./package.json').version")
+                  VERSION_PARTS=(${CURRENT_VERSION//./ })
+                  NEW_PATCH=$((VERSION_PARTS[2] + 1))
+                  VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$NEW_PATCH"
+                  echo "VERSION=$VERSION" >> $GITHUB_ENV
+                  echo "::set-output name=version::$VERSION"
+
+            - name: Update version in meta.js
+              run: node scripts/update-version.js ${{ env.VERSION }}
+
+            - name: Update version in package.json
+              run: npm version ${{ env.VERSION }} --no-git-tag-version
+
+            - name: Build
+              run: npm run build
+
+            - name: Create Release
+              id: create_release
+              uses: softprops/action-gh-release@v1
+              with:
+                  name: Release v${{ env.VERSION }}
+                  tag_name: v${{ env.VERSION }}
+                  draft: false
+                  prerelease: false
+                  files: |
+                      dist/blunder-guessr.user.js
+                  generate_release_notes: true
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
