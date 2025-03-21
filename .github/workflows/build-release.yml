@@ -46,7 +46,7 @@ jobs:
               uses: softprops/action-gh-release@v2
               with:
                   name: Release v${{ env.VERSION }}
-                  tag_name: v${{ env.VERSION }}
+                  tag_name: prod
                   draft: false
                   prerelease: false
                   files: |
