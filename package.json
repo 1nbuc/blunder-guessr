@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && cat src/meta.js dist/blunder-guessr.user.js > dist/temp.js && mv dist/temp.js dist/blunder-guessr.user.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "update-version": "node scripts/update-version.js"
   },
   "keywords": [
     "geoguessr",
