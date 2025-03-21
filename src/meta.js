@@ -16,4 +16,6 @@
 // @grant        unsafeWindow
 // @require      https://miraclewhips.dev/geoguessr-event-framework/geoguessr-event-framework.min.js
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=geoguessr.com
+// @updateURL    https://github.com/1nbuc/blunder-guessr/releases/download/prod/blunder-guessr.user.js
+// @downloadURL  https://github.com/1nbuc/blunder-guessr/releases/download/prod/blunder-guessr.user.js
 // ==/UserScript==
