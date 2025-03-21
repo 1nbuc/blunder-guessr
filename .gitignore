@@ -1,0 +1,32 @@
+# Systemdateien
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Abhängigkeiten
+/node_modules
+/bower_components
+
+# IDE und Editor-Ordner
+/.idea
+/.vscode
+*.sublime-project
+*.sublime-workspace
+
+# Temporäre Dateien
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Persönliche Konfigurationsdateien
+*.local.js
+*.env
+env.js
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Exportierte JSON-Dateien (außer makingz.json als Beispiel)
+blunder-guessr*.json 
