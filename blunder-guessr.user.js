@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Blunder-Guessr - GeoGuessr Schwache Runden Sammler
+// @name         Blunder-Guessr - GeoGuessr Weak Rounds Collector
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  Sammelt und speichert GeoGuessr-Runden mit niedriger Punktzahl
+// @description  Collects and saves GeoGuessr rounds with low scores
 // @author       1nbuc
 // @match        *://*.geoguessr.com/*
 // @run-at       document-start
@@ -18,49 +18,49 @@
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=geoguessr.com
 // ==/UserScript==
 
-// Standard-Konfiguration
+// Default configuration
 const DEFAULT_CONFIG = {
-	// Punkteschwellenwert, unter dem eine Runde als "schlecht" gilt
+	// Score threshold below which a round is considered "bad"
 	scoreThreshold: 2000,
 
-	// Speicherung der Runden in Datei aktivieren/deaktivieren
+	// Enable/disable saving rounds to file
 	enableSaving: true,
 
-	// UI anzeigen
+	// Show UI
 	showUI: true,
 
-	// UI minimiert starten
+	// Start minimized
 	startMinimized: false,
 
-	// Automatische Erinnerung beim Runden-Ende
+	// Automatic reminder at the end of round
 	showNotification: true,
 
-	// GeoGuessr Map ID zum Hinzufügen der Blunder
+	// GeoGuessr Map ID to add blunders to
 	mapId: "",
 
 	debug: true,
 };
 
-// Konfiguration laden
+// Load configuration
 let CONFIG = GM_getValue("config", DEFAULT_CONFIG);
 
-// Sicherstellen, dass alle Konfigurationen vorhanden sind
+// Ensure all configurations are present
 Object.keys(DEFAULT_CONFIG).forEach((key) => {
 	if (CONFIG[key] === undefined) {
 		CONFIG[key] = DEFAULT_CONFIG[key];
 	}
 });
 
-// Speicherung für Duelle - wir speichern Daten während des Spiels und schreiben sie erst am Ende
+// Storage for duels - we save data during the game and write only at the end
 let duelData = {
 	inProgress: false,
 	badRounds: [],
 };
 
-// Temporärer Speicher für Blunder
+// Temporary storage for blunders
 let blunders = GM_getValue("blunders", []);
 
-// UI-Elemente
+// UI elements
 let uiElements = {
 	container: null,
 	status: null,
@@ -68,26 +68,23 @@ let uiElements = {
 	minimizeBtn: null,
 };
 
-// Hilfsfunktion für Debug-Logs
+// Helper function for debug logs
 function debug(...args) {
 	if (true) {
 		console.log("[Blunder-Guessr]", ...args);
 	}
 }
 
-// Funktion zum Speichern der Konfiguration
+// Function to save configuration
 function saveConfig() {
 	GM_setValue("config", CONFIG);
-	debug("Konfiguration gespeichert", CONFIG);
+	debug("Configuration saved", CONFIG);
 }
 
-// Funktion zum Abrufen der aktuellen Kartendaten
+// Function to fetch current map data
 async function fetchMapData() {
 	if (!CONFIG.mapId) {
-		showNotification(
-			"Keine Map-ID konfiguriert. Bitte in den Einstellungen festlegen.",
-			5000
-		);
+		showNotification("No Map ID configured. Please set in settings.", 5000);
 		return null;
 	}
 
@@ -106,46 +103,38 @@ async function fetchMapData() {
 		);
 
 		if (!response.ok) {
-			throw new Error(
-				`Fehler beim Abrufen der Kartendaten: ${response.status}`
-			);
+			throw new Error(`Error fetching map data: ${response.status}`);
 		}
 
 		const data = await response.json();
-		debug("Kartendaten abgerufen", data);
+		debug("Map data retrieved", data);
 		return data;
 	} catch (error) {
-		console.error(
-			"[Blunder-Guessr] Fehler beim Abrufen der Kartendaten:",
-			error
-		);
-		showNotification(
-			`Fehler beim Abrufen der Kartendaten: ${error.message}`,
-			5000
-		);
+		console.error("[Blunder-Guessr] Error fetching map data:", error);
+		showNotification(`Error fetching map data: ${error.message}`, 5000);
 		return null;
 	}
 }
 
-// Funktion zum Aktualisieren der Karte mit neuen Standorten
+// Function to update the map with new locations
 async function updateMap(newLocation) {
 	if (!CONFIG.mapId) {
 		showNotification(
-			"Keine Map-ID konfiguriert. Die Runde wurde lokal gespeichert.",
+			"No Map ID configured. The round was saved locally.",
 			3000
 		);
-		// Lokale Speicherung als Fallback
+		// Local storage as fallback
 		blunders.push(newLocation);
 		GM_setValue("blunders", blunders);
 		return false;
 	}
 
 	try {
-		// Aktuelle Kartendaten abrufen
+		// Fetch current map data
 		const mapData = await fetchMapData();
 		if (!mapData) return false;
 
-		// Neuen Standort hinzufügen
+		// Add new location
 		const existingCoordinates = mapData.coordinates || [];
 		const newCoordinates = [
 			...existingCoordinates,
@@ -161,7 +150,7 @@ async function updateMap(newLocation) {
 			},
 		];
 
-		// Karte aktualisieren
+		// Update map
 		const updateResponse = await fetch(
 			`https://www.geoguessr.com/api/v4/user-maps/drafts/${CONFIG.mapId}`,
 			{
@@ -177,60 +166,50 @@ async function updateMap(newLocation) {
 		);
 
 		if (!updateResponse.ok) {
-			throw new Error(
-				`Fehler beim Aktualisieren der Karte: ${updateResponse.status}`
-			);
+			throw new Error(`Error updating map: ${updateResponse.status}`);
 		}
 
-		debug("Karte erfolgreich aktualisiert");
+		debug("Map successfully updated");
 		return true;
 	} catch (error) {
-		console.error(
-			"[Blunder-Guessr] Fehler beim Aktualisieren der Karte:",
-			error
-		);
+		console.error("[Blunder-Guessr] Error updating map:", error);
 		showNotification(
-			`Fehler beim Aktualisieren der Karte: ${error.message}. Die Runde wurde lokal gespeichert.`,
+			`Error updating map: ${error.message}. The round was saved locally.`,
 			5000
 		);
 
-		// Lokale Speicherung als Fallback
+		// Local storage as fallback
 		blunders.push(newLocation);
 		GM_setValue("blunders", blunders);
 		return false;
 	}
 }
 
-// Funktion zum Speichern einer schlechten Runde
+// Function to save a bad round
 async function saveBadRound(gameData, roundIndex) {
 	if (!CONFIG.enableSaving) return;
 
 	try {
 		const round = gameData.rounds[roundIndex];
 		if (!round || !round.location) {
-			debug("Ungültige Rundendaten", round);
+			debug("Invalid round data", round);
 			return;
 		}
 
-		// Punktzahl prüfen
+		// Check score
 		const score = round.score?.amount || 0;
 		if (score > CONFIG.scoreThreshold) {
-			debug(
-				"Punktzahl über Schwellenwert",
-				score,
-				">",
-				CONFIG.scoreThreshold
-			);
+			debug("Score above threshold", score, ">", CONFIG.scoreThreshold);
 			return;
 		}
 
-		// Stelle sicher, dass die Lokation vollständig ist
+		// Ensure location is complete
 		if (!round.location.lat || !round.location.lng) {
-			debug("Unvollständige Lokationsdaten", round.location);
+			debug("Incomplete location data", round.location);
 			return;
 		}
 
-		// Format für die Speicherung erstellen
+		// Create format for storage
 		const badRound = {
 			lat: round.location.lat,
 			lng: round.location.lng,
@@ -250,25 +229,20 @@ async function saveBadRound(gameData, roundIndex) {
 			},
 		};
 
-		// Zur Karte hinzufügen
+		// Add to map
 		const success = await updateMap(badRound);
 
 		if (success) {
-			showNotification(
-				`Schwache Runde (${score} Punkte) zur Karte hinzugefügt!`
-			);
+			showNotification(`Weak round (${score} points) added to map!`);
 		}
 
-		debug("Schlechte Runde gespeichert", badRound);
+		debug("Bad round saved", badRound);
 	} catch (error) {
-		console.error(
-			"[Blunder-Guessr] Fehler beim Speichern der Runde:",
-			error
-		);
+		console.error("[Blunder-Guessr] Error saving round:", error);
 	}
 }
 
-// Zeige eine Benachrichtigung an
+// Show a notification
 function showNotification(message, duration = 3000) {
 	const notification = document.createElement("div");
 	notification.style.cssText = `
@@ -285,7 +259,7 @@ function showNotification(message, duration = 3000) {
 			animation: fadeIn 0.3s, fadeOut 0.3s ${duration / 1000 - 0.3}s forwards;
 		`;
 
-	// Füge eine CSS-Animation hinzu
+	// Add CSS animation
 	const style = document.createElement("style");
 	style.textContent = `
 			@keyframes fadeIn {
@@ -307,75 +281,18 @@ function showNotification(message, duration = 3000) {
 	}, duration);
 }
 
-// Funktion zum Exportieren der lokal gespeicherten Daten
-function exportToJSON() {
-	try {
-		if (!blunders.length) {
-			showNotification(
-				"Keine lokal gespeicherten Runden zum Exportieren vorhanden.",
-				5000
-			);
-			return;
-		}
 
-		const jsonData = {
-			name: "blunders",
-			customCoordinates: blunders,
-			extra: {
-				tags: {},
-			},
-		};
 
-		// Erstelle einen Download für die JSON-Datei
-		const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
-			type: "application/json",
-		});
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = "blunder-guessr.json";
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
-		URL.revokeObjectURL(url);
-
-		debug("Daten exportiert", jsonData);
-		showNotification(`${blunders.length} Runden erfolgreich exportiert!`);
-	} catch (error) {
-		console.error("[Blunder-Guessr] Fehler beim Exportieren:", error);
-		showNotification("Fehler beim Exportieren der Daten.", 5000);
-	}
-}
-
-// Funktion zum Löschen aller gesammelten Daten
-function clearAllData() {
-	if (
-		confirm(
-			"Möchtest du wirklich alle lokal gespeicherten Blunder-Runden löschen?"
-		)
-	) {
-		GM_setValue("blunders", []);
-		blunders = [];
-		updateUI();
-		showNotification(
-			"Alle lokal gespeicherten Daten wurden gelöscht!",
-			5000
-		);
-	}
-}
-
-// Funktion zum Aktualisieren der UI
+// Function to update the UI
 function updateUI() {
 	if (!uiElements.status) return;
 
 	const count = blunders.length;
-	const mapConfigured = CONFIG.mapId
-		? "Karte konfiguriert"
-		: "Keine Karte konfiguriert";
-	uiElements.status.textContent = `${count} Runden lokal gespeichert | ${mapConfigured}`;
+	const mapConfigured = CONFIG.mapId ? "Map configured" : "No map configured";
+	uiElements.status.textContent = `${count} rounds locally stored | ${mapConfigured}`;
 }
 
-// Minimiere/Maximiere die UI
+// Minimize/Maximize the UI
 function toggleMinimize() {
 	if (!uiElements.content || !uiElements.minimizeBtn) return;
 
@@ -383,12 +300,12 @@ function toggleMinimize() {
 	uiElements.content.style.display = isMinimized ? "flex" : "none";
 	uiElements.minimizeBtn.textContent = isMinimized ? "−" : "+";
 
-	// Speichere den Status
+	// Save status
 	CONFIG.startMinimized = !isMinimized;
 	saveConfig();
 }
 
-// Funktion zum Erstellen eines Einstellungs-Elements
+// Function to create a settings element
 function createSettingElement(label, type, value, onChange) {
 	const container = document.createElement("div");
 	container.style.cssText =
@@ -431,9 +348,9 @@ function createSettingElement(label, type, value, onChange) {
 	return container;
 }
 
-// Einstellungsmenü anzeigen
+// Show settings menu
 function showSettings() {
-	// Erstelle das Menü
+	// Create menu
 	const settingsContainer = document.createElement("div");
 	settingsContainer.style.cssText = `
 		position: fixed;
@@ -450,21 +367,21 @@ function showSettings() {
 		box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 	`;
 
-	// Überschrift
+	// Heading
 	const title = document.createElement("h2");
-	title.textContent = "Blunder-Guessr Einstellungen";
+	title.textContent = "Blunder-Guessr Settings";
 	title.style.textAlign = "center";
 	title.style.marginTop = "0";
 
-	// Einstellungen Container
+	// Settings container
 	const settingsContent = document.createElement("div");
 	settingsContent.style.cssText =
 		"display: flex; flex-direction: column; margin: 15px 0;";
 
-	// Punkteschwellenwert
+	// Score threshold
 	settingsContent.appendChild(
 		createSettingElement(
-			"Punkteschwellenwert:",
+			"Score threshold:",
 			"number",
 			CONFIG.scoreThreshold,
 			(value) => {
@@ -473,10 +390,10 @@ function showSettings() {
 		)
 	);
 
-	// Speicherung aktivieren
+	// Enable saving
 	settingsContent.appendChild(
 		createSettingElement(
-			"Speicherung aktivieren:",
+			"Enable saving:",
 			"checkbox",
 			CONFIG.enableSaving,
 			(checked) => {
@@ -485,10 +402,10 @@ function showSettings() {
 		)
 	);
 
-	// UI anzeigen
+	// Show UI
 	settingsContent.appendChild(
 		createSettingElement(
-			"UI anzeigen:",
+			"Show UI:",
 			"checkbox",
 			CONFIG.showUI,
 			(checked) => {
@@ -504,10 +421,10 @@ function showSettings() {
 		)
 	);
 
-	// Start minimiert
+	// Start minimized
 	settingsContent.appendChild(
 		createSettingElement(
-			"Start minimiert:",
+			"Start minimized:",
 			"checkbox",
 			CONFIG.startMinimized,
 			(checked) => {
@@ -516,10 +433,10 @@ function showSettings() {
 		)
 	);
 
-	// Benachrichtigungen anzeigen
+	// Show notifications
 	settingsContent.appendChild(
 		createSettingElement(
-			"Benachrichtigungen:",
+			"Notifications:",
 			"checkbox",
 			CONFIG.showNotification,
 			(checked) => {
@@ -528,7 +445,7 @@ function showSettings() {
 		)
 	);
 
-	// Map ID Einstellung
+	// Map ID Setting
 	settingsContent.appendChild(
 		createSettingElement(
 			"GeoGuessr Map ID:",
@@ -540,11 +457,11 @@ function showSettings() {
 		)
 	);
 
-	// Map ID Hilfe
+	// Map ID Help
 	const mapIdHelp = document.createElement("p");
 	mapIdHelp.style.cssText = "font-size: 12px; margin-top: 0; color: #ccc;";
 	mapIdHelp.innerHTML =
-		"Die Map ID findest du in der URL deiner Karte:<br>https://www.geoguessr.com/map-maker/<b>deine-map-id</b>";
+		"You can find the Map ID in your map's URL:<br>https://www.geoguessr.com/map-maker/<b>your-map-id</b>";
 	settingsContent.appendChild(mapIdHelp);
 
 	// Buttons Container
@@ -552,22 +469,22 @@ function showSettings() {
 	buttons.style.cssText =
 		"display: flex; justify-content: space-between; margin-top: 20px;";
 
-	// Speichern-Button
+	// Save Button
 	const saveButton = document.createElement("button");
-	saveButton.textContent = "Speichern";
+	saveButton.textContent = "Save";
 	saveButton.style.cssText =
 		"cursor: pointer; background-color: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 3px;";
 	saveButton.onclick = () => {
 		saveConfig();
 		document.body.removeChild(settingsContainer);
 		document.body.removeChild(overlay);
-		showNotification("Einstellungen gespeichert!");
+		showNotification("Settings saved!");
 		updateUI();
 	};
 
-	// Abbrechen-Button
+	// Cancel Button
 	const cancelButton = document.createElement("button");
-	cancelButton.textContent = "Abbrechen";
+	cancelButton.textContent = "Cancel";
 	cancelButton.style.cssText =
 		"cursor: pointer; background-color: #f44336; color: white; border: none; padding: 8px 15px; border-radius: 3px;";
 	cancelButton.onclick = () => {
@@ -578,12 +495,12 @@ function showSettings() {
 	buttons.appendChild(cancelButton);
 	buttons.appendChild(saveButton);
 
-	// Alle Elemente zusammenfügen
+	// Combine all elements
 	settingsContainer.appendChild(title);
 	settingsContainer.appendChild(settingsContent);
 	settingsContainer.appendChild(buttons);
 
-	// Hintergrund-Overlay
+	// Background overlay
 	const overlay = document.createElement("div");
 	overlay.style.cssText = `
 		position: fixed;
@@ -599,26 +516,26 @@ function showSettings() {
 		document.body.removeChild(overlay);
 	};
 
-	// Zur Seite hinzufügen
+	// Add to page
 	document.body.appendChild(overlay);
 	document.body.appendChild(settingsContainer);
 }
 
-// Funktion zum Hinzufügen der UI
+// Function to add the UI
 function addUI() {
-	// Warte, bis die Seite geladen ist
+	// Wait until page is loaded
 	if (!document.body) {
 		setTimeout(addUI, 100);
 		return;
 	}
 
-	// Falls UI deaktiviert ist, nichts tun
+	// If UI is disabled, do nothing
 	if (!CONFIG.showUI) {
-		debug("UI ist deaktiviert");
+		debug("UI is disabled");
 		return;
 	}
 
-	// UI-Container erstellen
+	// Create UI container
 	const container = document.createElement("div");
 	container.style.cssText = `
 		position: fixed;
@@ -636,17 +553,17 @@ function addUI() {
 		gap: 5px;
 	`;
 
-	// Header mit Titel und Minimieren-Button
+	// Header with title and minimize button
 	const header = document.createElement("div");
 	header.style.cssText =
 		"display: flex; justify-content: space-between; align-items: center;";
 
-	// Titel
+	// Title
 	const title = document.createElement("div");
 	title.textContent = "Blunder-Guessr";
 	title.style.fontWeight = "bold";
 
-	// Minimieren-Button
+	// Minimize button
 	const minimizeBtn = document.createElement("button");
 	minimizeBtn.textContent = CONFIG.startMinimized ? "+" : "−";
 	minimizeBtn.style.cssText =
@@ -656,61 +573,46 @@ function addUI() {
 	header.appendChild(title);
 	header.appendChild(minimizeBtn);
 
-	// Content-Bereich
+	// Content area
 	const content = document.createElement("div");
 	content.style.cssText = "display: flex; flex-direction: column; gap: 5px;";
 	content.style.display = CONFIG.startMinimized ? "none" : "flex";
 
-	// Status-Anzeige
+	// Status display
 	const status = document.createElement("div");
-	const mapConfigured = CONFIG.mapId
-		? "Karte konfiguriert"
-		: "Keine Karte konfiguriert";
-	status.textContent = `${blunders.length} Runden lokal gespeichert | ${mapConfigured}`;
+	const mapConfigured = CONFIG.mapId ? "Map configured" : "No map configured";
+	status.textContent = `${blunders.length} rounds locally stored | ${mapConfigured}`;
 	status.id = "blunder-status";
 
-	// Button-Container
+	// Button container
 	const buttonContainer = document.createElement("div");
 	buttonContainer.style.cssText = "display: flex; gap: 5px;";
 
-	// Export-Button
-	const exportBtn = document.createElement("button");
-	exportBtn.textContent = "Exportieren";
-	exportBtn.onclick = exportToJSON;
-	exportBtn.style.cssText =
-		"cursor: pointer; background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 3px;";
 
-	// Einstellungs-Button
+	// Settings button
 	const settingsBtn = document.createElement("button");
-	settingsBtn.textContent = "Einstellungen";
+	settingsBtn.textContent = "Settings";
 	settingsBtn.onclick = showSettings;
 	settingsBtn.style.cssText =
 		"cursor: pointer; background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 3px;";
 
-	// Löschen-Button
-	const clearBtn = document.createElement("button");
-	clearBtn.textContent = "Lokal löschen";
-	clearBtn.onclick = clearAllData;
-	clearBtn.style.cssText =
-		"cursor: pointer; background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px;";
 
-	// Buttons hinzufügen
-	buttonContainer.appendChild(exportBtn);
+	// Add buttons
 	buttonContainer.appendChild(settingsBtn);
-	buttonContainer.appendChild(clearBtn);
 
-	// Elemente zum Content hinzufügen
+
+	// Add elements to content
 	content.appendChild(status);
 	content.appendChild(buttonContainer);
 
-	// Alle Elemente zum Container hinzufügen
+	// Add all elements to container
 	container.appendChild(header);
 	container.appendChild(content);
 
-	// Container zur Seite hinzufügen
+	// Add container to page
 	document.body.appendChild(container);
 
-	// UI-Elemente speichern
+	// Save UI elements
 	uiElements = {
 		container,
 		status,
@@ -718,35 +620,35 @@ function addUI() {
 		minimizeBtn,
 	};
 
-	debug("UI hinzugefügt");
+	debug("UI added");
 }
 
-// Hauptfunktion zur Initialisierung des Frameworks
+// Main function to initialize the framework
 function initBlunderGuessr() {
-	debug("Initialisiere Blunder-Guessr...");
+	debug("Initializing Blunder-Guessr...");
 
-	// GeoGuessr Event Framework initialisieren
+	// Initialize GeoGuessr Event Framework
 	GeoGuessrEventFramework.init()
 		.then((GEF) => {
-			debug("Event Framework initialisiert");
+			debug("Event Framework initialized");
 
-			// Event-Listener für normale Spiele (nicht Duelle)
+			// Event listener for normal games (not duels)
 			GEF.events.addEventListener("round_end", (event) => {
 				const gameData = event.detail;
-				const currentRound = gameData.current_round - 1; // Index ist 0-basiert
+				const currentRound = gameData.current_round - 1; // Index is 0-based
 
-				// Ist dies ein normales Spiel? (nicht Duel-Mode)
+				// Is this a normal game? (not Duel-Mode)
 				const isDuelMode = window.location.pathname.includes("/duels/");
 
 				if (!isDuelMode) {
-					debug("Runde beendet (normales Spiel)", currentRound);
+					debug("Round ended (normal game)", currentRound);
 					saveBadRound(gameData, currentRound);
 				} else {
-					// Für Duelle speichern wir temporär, schreiben aber erst am Ende
-					debug("Runde beendet (Duel-Mode)", currentRound);
+					// For duels we save temporarily, but write only at the end
+					debug("Round ended (Duel-Mode)", currentRound);
 					duelData.inProgress = true;
 
-					// Punktzahl prüfen
+					// Check score
 					const round = gameData.rounds[currentRound];
 					const score = round?.score?.amount || 0;
 
@@ -756,43 +658,43 @@ function initBlunderGuessr() {
 				}
 			});
 
-			// Event-Listener für Spielende
+			// Event listener for game end
 			GEF.events.addEventListener("game_end", (event) => {
 				const gameData = event.detail;
 				const isDuelMode = window.location.pathname.includes("/duels/");
 
 				debug(
-					"Spiel beendet",
-					isDuelMode ? "(Duel-Mode)" : "(normales Spiel)"
+					"Game ended",
+					isDuelMode ? "(Duel-Mode)" : "(normal game)"
 				);
 
 				if (isDuelMode && duelData.inProgress) {
-					// Jetzt können wir die Daten für Duelle sicher speichern
+					// Now we can safely save data for duels
 					duelData.badRounds.forEach((roundIndex) => {
 						saveBadRound(gameData, roundIndex);
 					});
 
-					// Duel-Daten zurücksetzen
+					// Reset duel data
 					duelData.inProgress = false;
 					duelData.badRounds = [];
 				}
 
-				// UI aktualisieren
+				// Update UI
 				updateUI();
 			});
 
-			// UI hinzufügen
+			// Add UI
 			setTimeout(addUI, 2000);
 		})
 		.catch((error) => {
 			console.error(
-				"[Blunder-Guessr] Fehler beim Initialisieren des Frameworks:",
+				"[Blunder-Guessr] Error initializing framework:",
 				error
 			);
 		});
 }
 
-// Script starten
+// Start script
 if (document.readyState === "loading") {
 	document.addEventListener("DOMContentLoaded", async () => {
 		initBlunderGuessr();
