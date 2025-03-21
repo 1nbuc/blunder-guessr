@@ -29,4 +29,24 @@ env.js
 .env.production.local
 
 # Exportierte JSON-Dateien (außer makingz.json als Beispiel)
-blunder-guessr*.json 
+blunder-guessr*.json
+
+# Node dependencies
+node_modules/
+
+# Build directory
+dist/
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw? 
