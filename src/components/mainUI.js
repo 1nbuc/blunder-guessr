@@ -126,9 +126,13 @@ export function addUI() {
 		"cursor: pointer; background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px;";
 
 	// Add buttons
-	buttonContainer.appendChild(exportBtn);
 	buttonContainer.appendChild(settingsBtn);
-	buttonContainer.appendChild(clearBtn);
+
+	if (CONFIG.debug) {
+		buttonContainer.appendChild(exportBtn);
+		buttonContainer.appendChild(clearBtn);
+	}
+
 
 	// Add elements to content
 	content.appendChild(status);
