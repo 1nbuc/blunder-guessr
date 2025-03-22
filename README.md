@@ -16,7 +16,7 @@ A Tampermonkey script for GeoGuessr that automatically collects weak rounds and 
 1. Install Tampermonkey browser extension
 2. [Click here](https://github.com/1nbuc/blunder-guessr/releases/download/prod/blunder-guessr.user.js)
 3. Create a new geoguessr map [here](https://www.geoguessr.com/me/maps) Use handpicked locations!
-4. Copy the map ID you can find in the URL. Format https://www.geoguessr.com/map-maker/<map-id>
+4. Copy the map ID you can find in the URL. Format `https://www.geoguessr.com/map-maker/<map-id>`
 5. Open Settings of the extension in the right corner and enter the Map ID
 
 
