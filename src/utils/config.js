@@ -18,6 +18,9 @@ const DEFAULT_CONFIG = {
 	// GeoGuessr Map ID to add blunders to
 	mapId: "",
 
+	// Enable tracking on Duels mode
+	enableOnDuels: true,
+
 	debug: true,
 };
 

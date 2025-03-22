@@ -1,9 +1,14 @@
 import { debug } from "./utils/config";
 import { addUI, updateUI } from "./components/mainUI";
-import { processRoundEnd, processGameEnd } from "./utils/gameProcessor";
+import {
+	processRoundEnd,
+	processGameEnd,
+} from "./utils/gameProcessorSingleplayer";
+import { CONFIG } from "./utils/config";
+import { processDuelsSummary } from "./utils/gameProcessorDuels";
 
 // Main function to initialize the framework
-function initBlunderGuessr() {
+function initSingleplayerListener() {
 	debug("Initializing Blunder-Guessr...");
 
 	// Initialize GeoGuessr Event Framework
@@ -35,13 +40,44 @@ function initBlunderGuessr() {
 		});
 }
 
+function initDuelsListener() {
+	// Check if we are on a Duels summary page
+	const duelsRegex =
+		/^https:\/\/www\.geoguessr\.com\/duels\/([a-zA-Z0-9-]+)\/summary$/;
+	const match = window.location.href.match(duelsRegex);
+
+	if (!match) {
+		debug("Not on a Duels summary page");
+		return;
+	}
+
+	// Extract the Duels game ID from the URL
+	const gameId = match[1];
+	debug("Duels summary page detected. Game ID:", gameId);
+
+	// Wait until the page is fully loaded
+	setTimeout(async () => {
+		debug("Processing Duels summary data...");
+
+		// Process the Duels summary page
+		const badRoundsFound = await processDuelsSummary(gameId);
+
+		if (badRoundsFound > 0) {
+			// Update UI
+			updateUI();
+		}
+	}, 3000); // Wait until the page is fully loaded
+}
+
 // Start script
 if (document.readyState === "loading") {
 	document.addEventListener("DOMContentLoaded", async () => {
-		initBlunderGuessr();
+		initSingleplayerListener();
+		initDuelsListener(); // Also initialize Duels listener
 	});
 } else {
-	initBlunderGuessr();
+	initSingleplayerListener();
+	initDuelsListener(); // Also initialize Duels listener
 }
 
 // Make global for debugging
