@@ -135,6 +135,18 @@ export function showSettings() {
 		)
 	);
 
+	// Enable on Duels
+	settingsContent.appendChild(
+		createSettingElement(
+			"Enable on Duels:",
+			"checkbox",
+			CONFIG.enableOnDuels,
+			(checked) => {
+				CONFIG.enableOnDuels = checked;
+			}
+		)
+	);
+
 	// Map ID Setting
 	settingsContent.appendChild(
 		createSettingElement(

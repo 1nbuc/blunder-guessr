@@ -67,6 +67,12 @@ export function processRoundEnd(gameData) {
 	// Is this a normal game? (not Duel-Mode)
 	const isDuelMode = window.location.pathname.includes("/duels/");
 
+	// Skip duels if disabled in settings
+	if (isDuelMode && !CONFIG.enableOnDuels) {
+		debug("Round ended in Duel mode but tracking is disabled for duels");
+		return;
+	}
+
 	if (!isDuelMode) {
 		debug("Round ended (normal game)", currentRound);
 		saveBadRound(gameData, currentRound);
@@ -90,6 +96,12 @@ export function processGameEnd(gameData) {
 	const isDuelMode = window.location.pathname.includes("/duels/");
 
 	debug("Game ended", isDuelMode ? "(Duel-Mode)" : "(normal game)");
+
+	// Skip duels if disabled in settings
+	if (isDuelMode && !CONFIG.enableOnDuels) {
+		debug("Game ended in Duel mode but tracking is disabled for duels");
+		return;
+	}
 
 	if (isDuelMode && duelData.inProgress) {
 		// Now we can safely save data for duels

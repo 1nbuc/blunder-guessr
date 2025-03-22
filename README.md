@@ -14,35 +14,22 @@ A Tampermonkey script for GeoGuessr that automatically collects weak rounds and 
 ## Installation (End Users)
 
 1. Install Tampermonkey browser extension
-2. Open Tampermonkey dashboard
-3. Create a new script
-4. Copy the contents of the `dist/blunder-guessr.user.js` file
-5. Save the script
+2. [Click here](https://github.com/1nbuc/blunder-guessr/releases/download/prod/blunder-guessr.user.js)
+3. Create a new geoguessr map [here](https://www.geoguessr.com/me/maps) Use handpicked locations!
+4. Copy the map ID you can find in the URL. Format https://www.geoguessr.com/map-maker/<map-id>
+5. Open Settings of the extension in the right corner and enter the Map ID
+
 
 ## Usage
 
-1. Start playing GeoGuessr
-2. Configure your Map ID in the settings (if needed)
-3. Low-scoring rounds will automatically be detected and saved
+### Single Player
+Just play, it will automatically add rounds to your map
+
+### Duels
+After each Duels match press the Breakdown button. The script will then autmatically add the locations to your map
+Make sure Enable on Duels is checked in settings
+
+## Settings
+`Score threashold`: Threashold on which the guesses should be saved. E.g. 2000 configured. Every location guessd with a score lower then 2000 will be added to the map.
 
 
-### Getting Started
-
-1. Clone the repository
-2. Install dependencies:
-    ```
-    npm install
-    ```
-3. Start the development server:
-    ```
-    npm run dev
-    ```
-4. Build for production:
-    ```
-    npm run build
-    ```
-
-
-## License
-
-ISC
