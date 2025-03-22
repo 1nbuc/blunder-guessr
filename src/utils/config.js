@@ -10,7 +10,7 @@ const DEFAULT_CONFIG = {
 	showUI: true,
 
 	// Start minimized
-	startMinimized: false,
+	startMinimized: true,
 
 	// Automatic reminder at the end of round
 	showNotification: true,
@@ -21,7 +21,7 @@ const DEFAULT_CONFIG = {
 	// Enable tracking on Duels mode
 	enableOnDuels: true,
 
-	debug: true,
+	debug: false,
 };
 
 // Load configuration
