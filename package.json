@@ -1,6 +1,6 @@
 {
   "name": "blunder-guessr",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Tampermonkey script for GeoGuessr that automatically collects weak rounds and adds them directly to your GeoGuessr map.",
   "main": "dist/blunder-guessr.user.js",
   "scripts": {
