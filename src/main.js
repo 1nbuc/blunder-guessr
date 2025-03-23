@@ -7,6 +7,8 @@ import {
 import { CONFIG } from "./utils/config";
 import { processDuelsSummary } from "./utils/gameProcessorDuels";
 
+
+
 // Main function to initialize the framework
 function initSingleplayerListener() {
 	debug("Initializing Blunder-Guessr...");
@@ -41,32 +43,91 @@ function initSingleplayerListener() {
 }
 
 function initDuelsListener() {
-	// Check if we are on a Duels summary page
+	// Check if we are on a Duels summary page or multiplayer page
 	const duelsRegex =
 		/^https:\/\/www\.geoguessr\.com\/duels\/([a-zA-Z0-9-]+)\/summary$/;
-	const match = window.location.href.match(duelsRegex);
+	const multiplayerRegex = /^https:\/\/www\.geoguessr\.com\/multiplayer$/;
 
-	if (!match) {
-		debug("Not on a Duels summary page");
+	const isDuelsSummary = duelsRegex.test(window.location.href);
+	const isMultiplayer = multiplayerRegex.test(window.location.href);
+
+	if (!isDuelsSummary && !isMultiplayer) {
+		debug("Not on a supported page for Duels functionality");
 		return;
 	}
 
-	// Extract the Duels game ID from the URL
-	const gameId = match[1];
-	debug("Duels summary page detected. Game ID:", gameId);
+	let gameId = null;
+	if (isDuelsSummary) {
+		const match = window.location.href.match(duelsRegex);
+		gameId = match[1];
+		debug("Duels summary page detected. Game ID:", gameId);
+	} else {
+		debug("Multiplayer page detected");
+	}
 
-	// Wait until the page is fully loaded
-	setTimeout(async () => {
-		debug("Processing Duels summary data...");
+	// If on duels summary, process immediately
+	if (isDuelsSummary) {
+		setTimeout(async () => {
+			debug("Processing Duels summary data...");
 
-		// Process the Duels summary page
-		const badRoundsFound = await processDuelsSummary(gameId);
+			// Process the Duels summary page
+			const badRoundsFound = await processDuelsSummary(gameId);
 
-		if (badRoundsFound > 0) {
-			// Update UI
-			updateUI();
+			if (badRoundsFound > 0) {
+				// Update UI
+				updateUI();
+			}
+		}, 500);
+		return;
+	}
+
+	// Set up observer to find and auto-click the breakdown button
+	debug("Setting up observer for breakdown button");
+	const observer = new MutationObserver(() => {
+		// Find the breakdown button
+
+		const breakdownButton = findBreakdownButton();
+
+		if (breakdownButton) {
+			debug("Found breakdown button - auto-clicking");
+			// Auto-click the button
+			breakdownButton.click();
+			// Process data after click
+			setTimeout(initDuelsListener, 500);
 		}
-	}, 3000); // Wait until the page is fully loaded
+	});
+
+	// Start observing for DOM changes
+	observer.observe(document.body, {
+		childList: true,
+		subtree: true,
+	});
+
+	// Stop observing after 10 minutes to prevent memory leaks
+	setTimeout(() => {
+		debug("Disconnecting button observer");
+		observer.disconnect();
+	}, 600000);
+}
+
+// Function to find the breakdown button
+function findBreakdownButton() {
+	// Look for spans with "Breakdown" text
+	const breakdownSpans = Array.from(document.querySelectorAll("span")).filter(
+		(span) => span.textContent.trim() === "Breakdown"
+	);
+
+	for (const span of breakdownSpans) {
+		const container = span.closest("div");
+		if (container) {
+			const button = container.querySelector("button");
+			if (button) {
+				return button;
+			}
+		}
+	}
+
+	return null;
 }
 
 // Start script
