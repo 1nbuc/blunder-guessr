@@ -83,6 +83,11 @@ function initDuelsListener() {
 
 	// Set up observer to find and auto-click the breakdown button
 	debug("Setting up observer for breakdown button");
+
+	if(!CONFIG.enableOnDuels) {
+		return;
+	}
+
 	const observer = new MutationObserver(() => {
 		// Find the breakdown button
 
