@@ -7,8 +7,6 @@ import {
 import { CONFIG } from "./utils/config";
 import { processDuelsSummary } from "./utils/gameProcessorDuels";
 
-
-
 // Main function to initialize the framework
 function initSingleplayerListener() {
 	debug("Initializing Blunder-Guessr...");
@@ -42,28 +40,17 @@ function initSingleplayerListener() {
 		});
 }
 
-function initDuelsListener() {
+function handleBreakdown() {
 	// Check if we are on a Duels summary page or multiplayer page
 	const duelsRegex =
 		/^https:\/\/www\.geoguessr\.com\/duels\/([a-zA-Z0-9-]+)\/summary$/;
-	const multiplayerRegex = /^https:\/\/www\.geoguessr\.com\/multiplayer$/;
 
-	const isDuelsSummary = duelsRegex.test(window.location.href);
-	const isMultiplayer = multiplayerRegex.test(window.location.href);
-
-	if (!isDuelsSummary && !isMultiplayer) {
-		debug("Not on a supported page for Duels functionality");
-		return;
-	}
+	const isDuelsSummary = duelsRegex.test(unsafeWindow.location.href);
 
 	let gameId = null;
-	if (isDuelsSummary) {
-		const match = window.location.href.match(duelsRegex);
-		gameId = match[1];
-		debug("Duels summary page detected. Game ID:", gameId);
-	} else {
-		debug("Multiplayer page detected");
-	}
+	const match = unsafeWindow.location.href.match(duelsRegex);
+	gameId = match[1];
+	debug("Duels summary page detected. Game ID:", gameId);
 
 	// If on duels summary, process immediately
 	if (isDuelsSummary) {
@@ -83,8 +70,11 @@ function initDuelsListener() {
 
 	// Set up observer to find and auto-click the breakdown button
 	debug("Setting up observer for breakdown button");
+}
 
-	if(!CONFIG.enableOnDuels) {
+function initDuelsListener() {
+	if (!CONFIG.enableOnDuels) {
+		debug("disabled on duels");
 		return;
 	}
 
@@ -98,7 +88,7 @@ function initDuelsListener() {
 			// Auto-click the button
 			breakdownButton.click();
 			// Process data after click
-			setTimeout(initDuelsListener, 500);
+			setTimeout(handleBreakdown, 500);
 		}
 	});
 
@@ -108,11 +98,7 @@ function initDuelsListener() {
 		subtree: true,
 	});
 
-	// Stop observing after 10 minutes to prevent memory leaks
-	setTimeout(() => {
-		debug("Disconnecting button observer");
-		observer.disconnect();
-	}, 600000);
+	debug("Breakdown button listener initiated");
 }
 
 // Function to find the breakdown button
