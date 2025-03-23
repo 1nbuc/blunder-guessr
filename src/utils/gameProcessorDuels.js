@@ -1,4 +1,4 @@
-import { CONFIG, debug } from "./config";
+import { CONFIG, debug, hasBeenRefreshed, setHasBeenRefreshed } from "./config";
 import { updateMap } from "../api/geoguessrApi";
 import { showNotification } from "./notifications";
 
@@ -12,6 +12,21 @@ export async function processDuelsSummary(gameId) {
 	}
 
 	try {
+		if(!unsafeWindow.__NEXT_DATA__.props.pageProps.game && !hasBeenRefreshed()) {
+			debug("Reloading due to missing __NEXT_DATA__");
+			setHasBeenRefreshed(true);
+			location.reload();
+			
+			return;
+		}
+
+		if(!unsafeWindow.__NEXT_DATA__.props.pageProps.game && hasBeenRefreshed()) {
+			debug("Error getting data");
+			return;
+		}
+
+
+
 		if (unsafeWindow.__NEXT_DATA__.props.pageProps.game.rounds) {
 			const gameData = unsafeWindow.__NEXT_DATA__.props.pageProps.game;
 
@@ -55,7 +70,7 @@ export async function processDuelsSummary(gameId) {
 					`${badRounds.length} weak rounds saved from Duels match!`
 				);
 			}
-
+			setHasBeenRefreshed(false);
 			return badRounds.length;
 		} else {
 			debug("No INITIAL_STATE or Duels data found");

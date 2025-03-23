@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Blunder-Guessr - GeoGuessr Weak Rounds Collector
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.2
 // @description  Collects and saves GeoGuessr rounds with low scores
 // @author       1nbuc
 // @match        *://*.geoguessr.com/*

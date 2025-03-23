@@ -40,6 +40,16 @@ function saveConfig() {
 	debug("Configuration saved", CONFIG);
 }
 
+// Tracking refresh state persistently
+export function hasBeenRefreshed() {
+	return GM_getValue("hasRefreshedPage", false);
+}
+
+export function setHasBeenRefreshed(value) {
+	GM_setValue("hasRefreshedPage", value);
+	debug("Refresh state set to:", value);
+}
+
 // Helper function for debug logs
 function debug(...args) {
 	if (CONFIG.debug) {

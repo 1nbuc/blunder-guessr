@@ -26,7 +26,7 @@ A Tampermonkey script for GeoGuessr that automatically collects weak rounds and 
 Just play, it will automatically add rounds to your map
 
 ### Duels
-After each Duels match press the Breakdown button. The script will then autmatically add the locations to your map
+After each Duels match the script presses the Breakdown button. The script will then autmatically add the locations to your map
 Make sure Enable on Duels is checked in settings
 
 ## Settings
