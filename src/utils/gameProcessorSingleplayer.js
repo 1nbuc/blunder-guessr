@@ -1,5 +1,5 @@
 import { CONFIG, debug } from "./config";
-import { updateMap } from "../api/geoguessrApi";
+import { updateMap, publishMap } from "../api/geoguessrApi";
 import { showNotification } from "./notifications";
 import { duelData } from "./storage";
 
@@ -52,6 +52,10 @@ export async function saveBadRound(gameData, roundIndex) {
 
 		if (success && CONFIG.showNotification) {
 			showNotification(`Weak round (${score} points) added to map!`);
+		}
+
+		if (success && CONFIG.autoPublish) {
+			publishMap()
 		}
 
 		debug("Bad round saved", badRound);

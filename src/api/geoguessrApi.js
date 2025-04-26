@@ -108,3 +108,18 @@ export async function updateMap(newLocation) {
 		return false;
 	}
 }
+
+export async function publishMap() {
+	const res = await fetch(`https://www.geoguessr.com/api/v4/user-maps/drafts/${CONFIG.mapId}/publish/`, {
+		"headers": {
+		  "accept": "*/*",
+		  "content-type": "application/json"
+		},
+		"body": "{}",
+		"method": "PUT",
+		"credentials": "include"
+	});
+
+	if (res.status === 200) return true;
+	return false;
+}

@@ -135,6 +135,18 @@ export function showSettings() {
 		)
 	);
 
+	// Auto Publish
+	settingsContent.appendChild(
+		createSettingElement(
+			"Auto-Publish Map:",
+			"checkbox",
+			CONFIG.autoPublish,
+			(checked) => {
+				CONFIG.autoPublish = checked;
+			}
+		)
+	);
+
 	// Enable on Duels
 	settingsContent.appendChild(
 		createSettingElement(
