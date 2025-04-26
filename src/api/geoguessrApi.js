@@ -55,10 +55,9 @@ export async function updateMap(newLocation) {
 		const mapData = await fetchMapData();
 		if (!mapData) return false;
 
-		// Add new location
-		const existingCoordinates = mapData.coordinates || [];
-		const newCoordinates = [
-			...existingCoordinates,
+
+		mapData.customCoordinates = [
+			...mapData.coordinates,
 			{
 				lat: newLocation.lat,
 				lng: newLocation.lng,
@@ -71,6 +70,10 @@ export async function updateMap(newLocation) {
 			},
 		];
 
+		delete mapData.coordinates;
+
+		mapData.version = mapData.version += 1;
+
 		// Update map
 		const updateResponse = await fetch(
 			`https://www.geoguessr.com/api/v4/user-maps/drafts/${CONFIG.mapId}`,
@@ -81,12 +84,13 @@ export async function updateMap(newLocation) {
 					"x-client": "web",
 				},
 				method: "PUT",
-				body: JSON.stringify({ customCoordinates: newCoordinates }),
+				body: JSON.stringify(mapData),
 				credentials: "include",
 			}
 		);
 
 		if (!updateResponse.ok) {
+			console.error(updateResponse);
 			throw new Error(`Error updating map: ${updateResponse.status}`);
 		}
 
@@ -103,4 +107,19 @@ export async function updateMap(newLocation) {
 		saveLocalBlunder(newLocation);
 		return false;
 	}
+}
+
+export async function publishMap() {
+	const res = await fetch(`https://www.geoguessr.com/api/v4/user-maps/drafts/${CONFIG.mapId}/publish/`, {
+		"headers": {
+		  "accept": "*/*",
+		  "content-type": "application/json"
+		},
+		"body": "{}",
+		"method": "PUT",
+		"credentials": "include"
+	});
+
+	if (res.status === 200) return true;
+	return false;
 }
