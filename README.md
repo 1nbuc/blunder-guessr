@@ -32,4 +32,4 @@ Make sure Enable on Duels is checked in settings
 ## Settings
 `Score threashold`: Threashold on which the guesses should be saved. E.g. 2000 configured. Every location guessd with a score lower then 2000 will be added to the map.
 
-
+`Auto-Publish Map`: Allows to publish every added location of your map directly. Might will cause errors if you have less than 4 locs on your map
